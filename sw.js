@@ -1,13 +1,21 @@
-const CACHE="map-cache";
+let marker = null
+let first = true
 
-const files=[
-"./",
-"./index.html"
-];
+navigator.geolocation.watchPosition(function(pos){
 
-self.addEventListener("install",e=>{
-e.waitUntil(
-caches.open(CACHE)
-.then(cache=>cache.addAll(files))
-);
-});
+    const lat = pos.coords.latitude
+    const lon = pos.coords.longitude
+
+    if(marker == null){
+        marker = L.marker([lat, lon]).addTo(map)
+    }else{
+        marker.setLatLng([lat, lon])
+    }
+
+    // 最初の1回だけ中心移動
+    if(first){
+        map.setView([lat, lon], 16)
+        first = false
+    }
+
+})
