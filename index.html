@@ -166,7 +166,7 @@ screenAngle = screen.orientation.angle;
 
 }
 
-heading = heading + screenAngle;
+heading = heading + screenAngle+180;
 heading = (heading + 360) % 360;
 
 
@@ -206,3 +206,4 @@ navigator.serviceWorker.register('sw.js');
 
 </body>
 </html>
+
