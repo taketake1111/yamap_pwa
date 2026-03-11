@@ -2,7 +2,6 @@
 <html>
 <head>
 <meta charset="utf-8">
-
 <title>GPS Map</title>
 
 <link rel="manifest" href="manifest.json">
@@ -43,6 +42,7 @@ attribution:"地理院地図"
 
 var marker=null;
 var path=[];
+var firstFix=true;
 
 var polyline=L.polyline([],{
 color:"red",
@@ -64,7 +64,12 @@ marker.setLatLng([lat,lon]);
 
 polyline.setLatLngs(path);
 
+/* 最初のGPS取得だけ中心移動 */
+
+if(firstFix){
 map.setView([lat,lon],16);
+firstFix=false;
+}
 
 }
 
