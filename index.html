@@ -15,7 +15,6 @@ href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <meta name="viewport" content="width=device-width,initial-scale=1">
 
 <style>
-
 html,body{
 height:100%;
 margin:0;
@@ -24,7 +23,6 @@ margin:0;
 #map{
 height:100%;
 }
-
 </style>
 
 </head>
@@ -104,8 +102,6 @@ var lon=pos.coords.longitude;
 
 path.push([lat,lon]);
 
-/* 現在地 */
-
 if(marker==null){
 
 marker=L.circleMarker(
@@ -142,9 +138,7 @@ navigator.geolocation.watchPosition(
 updatePosition,
 function(err){alert(err.message);},
 {
-enableHighAccuracy:true,
-maximumAge:0,
-timeout:10000
+enableHighAccuracy:true
 }
 );
 
@@ -158,21 +152,18 @@ let heading = e.alpha;
 if(heading==null || marker==null) return;
 
 
-/* 画面回転補正 */
+/* 画面回転 */
 
 let screenAngle = 0;
 
-if (screen.orientation && screen.orientation.angle !== undefined) {
-    screenAngle = screen.orientation.angle;
+if (screen.orientation && screen.orientation.angle !== undefined){
+screenAngle = screen.orientation.angle;
 }
 
 
 /* 補正 */
 
-heading = heading + screenAngle + 90;
-
-
-/* 0〜360正規化 */
+heading = heading + screenAngle - 90;
 
 heading = (heading + 360) % 360;
 
