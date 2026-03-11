@@ -51,7 +51,7 @@ attribution:"地理院地図"
 
 var marker=null;
 
-/* 向き表示 */
+/* 向き */
 
 var cone=null;
 
@@ -67,7 +67,7 @@ weight:4
 var firstFix=true;
 
 
-/* 扇形生成 */
+/* 扇形 */
 
 function createCone(lat,lon,heading){
 
@@ -76,11 +76,13 @@ var spread=25;
 
 function point(angle){
 
-var rad=angle*Math.PI/180;
+var rad = angle*Math.PI/180;
+
+/* ★ここを修正 */
 
 return [
-lat + dist*Math.cos(rad),
-lon + dist*Math.sin(rad)
+lat + dist*Math.sin(rad),
+lon + dist*Math.cos(rad)
 ];
 
 }
@@ -134,20 +136,18 @@ firstFix=false;
 }
 
 
-/* GPS取得 */
+/* GPS */
 
 navigator.geolocation.watchPosition(
 updatePosition,
 function(err){alert(err.message);},
 {
-enableHighAccuracy:true,
-maximumAge:0,
-timeout:10000
+enableHighAccuracy:true
 }
 );
 
 
-/* 方位センサー */
+/* 方位 */
 
 window.addEventListener("deviceorientationabsolute", function(e){
 
@@ -166,13 +166,7 @@ screenAngle = screen.orientation.angle;
 
 }
 
-
-/* heading補正 */
-
-heading = heading + screenAngle+235;
-
-/* 正規化 */
-
+heading = heading + screenAngle;
 heading = (heading + 360) % 360;
 
 
@@ -212,6 +206,3 @@ navigator.serviceWorker.register('sw.js');
 
 </body>
 </html>
-
-
-
