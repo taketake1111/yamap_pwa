@@ -1,21 +1,22 @@
-let marker = null
-let first = true
+let marker = null;
+let firstFix = true;
 
-navigator.geolocation.watchPosition(function(pos){
+navigator.geolocation.watchPosition(function(position){
 
-    const lat = pos.coords.latitude
-    const lon = pos.coords.longitude
+    const lat = position.coords.latitude;
+    const lon = position.coords.longitude;
 
-    if(marker == null){
-        marker = L.marker([lat, lon]).addTo(map)
+    // マーカー生成
+    if(!marker){
+        marker = L.marker([lat, lon]).addTo(map);
     }else{
-        marker.setLatLng([lat, lon])
+        marker.setLatLng([lat, lon]);
     }
 
-    // 最初の1回だけ中心移動
-    if(first){
-        map.setView([lat, lon], 16)
-        first = false
+    // 最初の1回だけ地図を移動
+    if(firstFix){
+        map.setView([lat, lon], 16);
+        firstFix = false;
     }
 
-})
+});
