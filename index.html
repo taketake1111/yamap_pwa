@@ -15,6 +15,7 @@ href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <meta name="viewport" content="width=device-width,initial-scale=1">
 
 <style>
+
 html,body{
 height:100%;
 margin:0;
@@ -23,6 +24,7 @@ margin:0;
 #map{
 height:100%;
 }
+
 </style>
 
 </head>
@@ -49,7 +51,7 @@ attribution:"地理院地図"
 
 var marker=null;
 
-/* 向き扇形 */
+/* 向き表示 */
 
 var cone=null;
 
@@ -65,7 +67,7 @@ weight:4
 var firstFix=true;
 
 
-/* 扇形 */
+/* 扇形生成 */
 
 function createCone(lat,lon,heading){
 
@@ -132,12 +134,16 @@ firstFix=false;
 }
 
 
-/* GPS */
+/* GPS取得 */
 
 navigator.geolocation.watchPosition(
 updatePosition,
 function(err){alert(err.message);},
-{enableHighAccuracy:true}
+{
+enableHighAccuracy:true,
+maximumAge:0,
+timeout:10000
+}
 );
 
 
@@ -145,23 +151,27 @@ function(err){alert(err.message);},
 
 window.addEventListener("deviceorientationabsolute", function(e){
 
-let heading = e.alpha;
+let heading = e.webkitCompassHeading || e.alpha;
 
 if(heading==null || marker==null) return;
 
 
-/* 画面回転 */
+/* 画面回転補正 */
 
 let screenAngle = 0;
 
-if (screen.orientation && screen.orientation.angle !== undefined){
+if(screen.orientation && screen.orientation.angle!==undefined){
+
 screenAngle = screen.orientation.angle;
+
 }
 
 
-/* 補正 */
+/* heading補正 */
 
-heading = heading + screenAngle + 90;
+heading = heading + screenAngle;
+
+/* 正規化 */
 
 heading = (heading + 360) % 360;
 
@@ -193,11 +203,12 @@ cone.setLatLngs(shape);
 /* Service Worker */
 
 if('serviceWorker' in navigator){
+
 navigator.serviceWorker.register('sw.js');
+
 }
 
 </script>
 
 </body>
 </html>
-
