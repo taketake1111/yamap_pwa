@@ -25,14 +25,6 @@ margin:0;
 height:100%;
 }
 
-/* 矢印 */
-
-#arrow{
-font-size:36px;
-color:blue;
-transform-origin:center;
-}
-
 </style>
 
 </head>
@@ -55,17 +47,13 @@ attribution:"地理院地図"
 }).addTo(map);
 
 
-/* 矢印マーカー */
-
-var arrowIcon = L.divIcon({
-html:"<div id='arrow'>▲</div>",
-iconSize:[40,40],
-iconAnchor:[20,20],
-className:""
-});
+/* 現在地 */
 
 var marker=null;
 
+/* 向き扇形 */
+
+var cone=null;
 
 /* 軌跡 */
 
@@ -76,35 +64,33 @@ color:"red",
 weight:4
 }).addTo(map);
 
-
-/* 最初のGPS */
-
 var firstFix=true;
 
 
-/* 方位計算 */
+/* 扇形作成 */
 
-function bearing(lat1,lon1,lat2,lon2){
+function createCone(lat,lon,heading){
 
-var rad=Math.PI/180;
+var dist=0.0007;
+var spread=25;
 
-lat1*=rad;
-lat2*=rad;
+function point(angle){
 
-var dLon=(lon2-lon1)*rad;
+var rad=angle*Math.PI/180;
 
-var y=Math.sin(dLon)*Math.cos(lat2);
+return [
+lat + dist*Math.cos(rad),
+lon + dist*Math.sin(rad)
+];
 
-var x=
-Math.cos(lat1)*Math.sin(lat2)
--
-Math.sin(lat1)*Math.cos(lat2)*Math.cos(dLon);
+}
 
-var brng=Math.atan2(y,x);
-
-brng=brng*180/Math.PI;
-
-return (brng+360)%360;
+return [
+[lat,lon],
+point(heading-spread),
+point(heading),
+point(heading+spread)
+];
 
 }
 
@@ -116,23 +102,21 @@ function updatePosition(pos){
 var lat=pos.coords.latitude;
 var lon=pos.coords.longitude;
 
-
-/* 前の位置 */
-
-var prev=null;
-
-if(path.length>0){
-prev=path[path.length-1];
-}
-
 path.push([lat,lon]);
 
-
-/* マーカー */
+/* 現在地マーカー */
 
 if(marker==null){
 
-marker=L.marker([lat,lon],{icon:arrowIcon}).addTo(map);
+marker=L.circleMarker(
+[lat,lon],
+{
+radius:8,
+color:"white",
+weight:3,
+fillColor:"blue",
+fillOpacity:1
+}).addTo(map);
 
 }else{
 
@@ -140,40 +124,12 @@ marker.setLatLng([lat,lon]);
 
 }
 
-
-/* 軌跡 */
-
 polyline.setLatLngs(path);
-
-
-/* 初回だけ中心 */
 
 if(firstFix){
 
 map.setView([lat,lon],16);
 firstFix=false;
-
-}
-
-
-/* 進行方向 */
-
-if(prev){
-
-var dir=bearing(
-prev[0],
-prev[1],
-lat,
-lon
-);
-
-var arrow=document.getElementById("arrow");
-
-if(arrow){
-
-arrow.style.transform="rotate("+dir+"deg)";
-
-}
 
 }
 
@@ -185,12 +141,40 @@ arrow.style.transform="rotate("+dir+"deg)";
 navigator.geolocation.watchPosition(
 updatePosition,
 function(err){alert(err.message);},
-{
-enableHighAccuracy:true,
-maximumAge:0,
-timeout:10000
-}
+{enableHighAccuracy:true}
 );
+
+
+/* 方位センサー */
+
+window.addEventListener("deviceorientationabsolute",function(e){
+
+var heading=e.alpha;
+
+if(marker && heading!=null){
+
+var lat=marker.getLatLng().lat;
+var lon=marker.getLatLng().lng;
+
+var shape=createCone(lat,lon,heading);
+
+if(cone==null){
+
+cone=L.polygon(shape,{
+color:"blue",
+fillOpacity:0.35,
+weight:1
+}).addTo(map);
+
+}else{
+
+cone.setLatLngs(shape);
+
+}
+
+}
+
+});
 
 
 /* service worker */
