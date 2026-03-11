@@ -169,7 +169,7 @@ screenAngle = screen.orientation.angle;
 
 /* heading補正 */
 
-heading = heading + screenAngle;
+heading = heading + screenAngle+180;
 
 /* 正規化 */
 
@@ -212,3 +212,4 @@ navigator.serviceWorker.register('sw.js');
 
 </body>
 </html>
+
