@@ -8,13 +8,14 @@
 <link rel="manifest" href="manifest.json">
 
 <link rel="stylesheet"
- href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
 <meta name="viewport" content="width=device-width,initial-scale=1">
 
 <style>
+
 html,body{
 height:100%;
 margin:0;
@@ -22,14 +23,6 @@ margin:0;
 
 #map{
 height:100%;
-}
-
-/* 矢印マーカー */
-
-#arrow{
-font-size:32px;
-color:red;
-transform-origin:center;
 }
 
 </style>
@@ -54,27 +47,30 @@ attribution:"地理院地図"
 }).addTo(map);
 
 
-/* 矢印アイコン */
-
-var arrowIcon = L.divIcon({
-className:"",
-html:"<div id='arrow'>▲</div>",
-iconSize:[30,30],
-iconAnchor:[15,15]
-});
-
-
-/* GPS */
+/* 現在地 */
 
 var marker=null;
+
+/* 進行方向扇形 */
+
+var headingCone=null;
+
+/* 軌跡 */
+
 var path=[];
-var firstFix=true;
 
 var polyline=L.polyline([],{
 color:"red",
 weight:4
 }).addTo(map);
 
+
+/* 初回GPS */
+
+var firstFix=true;
+
+
+/* GPS更新 */
 
 function updatePosition(pos){
 
@@ -84,45 +80,92 @@ var lon=pos.coords.longitude;
 path.push([lat,lon]);
 
 if(marker==null){
-marker=L.marker([lat,lon],{icon:arrowIcon}).addTo(map);
+
+marker=L.circleMarker(
+[lat,lon],
+{
+radius:8,
+color:"white",
+weight:3,
+fillColor:"blue",
+fillOpacity:1
+}).addTo(map);
+
 }else{
+
 marker.setLatLng([lat,lon]);
+
 }
 
 polyline.setLatLngs(path);
 
-/* 最初の1回だけ中心移動 */
-
 if(firstFix){
+
 map.setView([lat,lon],16);
 firstFix=false;
-}
 
 }
 
+}
+
+
+/* GPS取得 */
 
 navigator.geolocation.watchPosition(
 updatePosition,
 function(err){alert(err.message);},
-{
-enableHighAccuracy:true,
-maximumAge:0,
-timeout:10000
-}
+{enableHighAccuracy:true}
 );
+
+
+/* 扇形を作る関数 */
+
+function createCone(lat,lon,heading){
+
+var dist=0.0008;
+
+var angle=30;
+
+var p1=[
+lat+dist*Math.cos((heading-angle)*Math.PI/180),
+lon+dist*Math.sin((heading-angle)*Math.PI/180)
+];
+
+var p2=[
+lat+dist*Math.cos((heading+angle)*Math.PI/180),
+lon+dist*Math.sin((heading+angle)*Math.PI/180)
+];
+
+return [ [lat,lon],p1,p2 ];
+
+}
 
 
 /* 方位センサー */
 
-window.addEventListener("deviceorientation",function(event){
+window.addEventListener("deviceorientationabsolute",function(e){
 
-var heading = event.alpha;
+var heading=e.alpha;
 
-var arrow = document.getElementById("arrow");
+if(marker && heading!=null){
 
-if(arrow && heading!=null){
+var lat=marker.getLatLng().lat;
+var lon=marker.getLatLng().lng;
 
-arrow.style.transform="rotate("+heading+"deg)";
+var cone=createCone(lat,lon,heading);
+
+if(headingCone==null){
+
+headingCone=L.polygon(cone,{
+color:"blue",
+fillOpacity:0.3
+}).addTo(map);
+
+}else{
+
+headingCone.setLatLngs(cone);
+
+}
 
 }
 
