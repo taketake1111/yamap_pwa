@@ -25,6 +25,14 @@ margin:0;
 height:100%;
 }
 
+/* 矢印 */
+
+#arrow{
+font-size:36px;
+color:blue;
+transform-origin:center;
+}
+
 </style>
 
 </head>
@@ -47,13 +55,17 @@ attribution:"地理院地図"
 }).addTo(map);
 
 
-/* 現在地 */
+/* 矢印マーカー */
+
+var arrowIcon = L.divIcon({
+html:"<div id='arrow'>▲</div>",
+iconSize:[40,40],
+iconAnchor:[20,20],
+className:""
+});
 
 var marker=null;
 
-/* 進行方向扇形 */
-
-var headingCone=null;
 
 /* 軌跡 */
 
@@ -65,9 +77,36 @@ weight:4
 }).addTo(map);
 
 
-/* 初回GPS */
+/* 最初のGPS */
 
 var firstFix=true;
+
+
+/* 方位計算 */
+
+function bearing(lat1,lon1,lat2,lon2){
+
+var rad=Math.PI/180;
+
+lat1*=rad;
+lat2*=rad;
+
+var dLon=(lon2-lon1)*rad;
+
+var y=Math.sin(dLon)*Math.cos(lat2);
+
+var x=
+Math.cos(lat1)*Math.sin(lat2)
+-
+Math.sin(lat1)*Math.cos(lat2)*Math.cos(dLon);
+
+var brng=Math.atan2(y,x);
+
+brng=brng*180/Math.PI;
+
+return (brng+360)%360;
+
+}
 
 
 /* GPS更新 */
@@ -77,19 +116,23 @@ function updatePosition(pos){
 var lat=pos.coords.latitude;
 var lon=pos.coords.longitude;
 
+
+/* 前の位置 */
+
+var prev=null;
+
+if(path.length>0){
+prev=path[path.length-1];
+}
+
 path.push([lat,lon]);
+
+
+/* マーカー */
 
 if(marker==null){
 
-marker=L.circleMarker(
-[lat,lon],
-{
-radius:8,
-color:"white",
-weight:3,
-fillColor:"blue",
-fillOpacity:1
-}).addTo(map);
+marker=L.marker([lat,lon],{icon:arrowIcon}).addTo(map);
 
 }else{
 
@@ -97,7 +140,13 @@ marker.setLatLng([lat,lon]);
 
 }
 
+
+/* 軌跡 */
+
 polyline.setLatLngs(path);
+
+
+/* 初回だけ中心 */
 
 if(firstFix){
 
@@ -106,70 +155,42 @@ firstFix=false;
 
 }
 
+
+/* 進行方向 */
+
+if(prev){
+
+var dir=bearing(
+prev[0],
+prev[1],
+lat,
+lon
+);
+
+var arrow=document.getElementById("arrow");
+
+if(arrow){
+
+arrow.style.transform="rotate("+dir+"deg)";
+
+}
+
+}
+
 }
 
 
-/* GPS取得 */
+/* GPS */
 
 navigator.geolocation.watchPosition(
 updatePosition,
 function(err){alert(err.message);},
-{enableHighAccuracy:true}
+{
+enableHighAccuracy:true,
+maximumAge:0,
+timeout:10000
+}
 );
-
-
-/* 扇形を作る関数 */
-
-function createCone(lat,lon,heading){
-
-var dist=0.0008;
-
-var angle=30;
-
-var p1=[
-lat+dist*Math.cos((heading-angle)*Math.PI/180),
-lon+dist*Math.sin((heading-angle)*Math.PI/180)
-];
-
-var p2=[
-lat+dist*Math.cos((heading+angle)*Math.PI/180),
-lon+dist*Math.sin((heading+angle)*Math.PI/180)
-];
-
-return [ [lat,lon],p1,p2 ];
-
-}
-
-
-/* 方位センサー */
-
-window.addEventListener("deviceorientationabsolute",function(e){
-
-var heading=e.alpha;
-
-if(marker && heading!=null){
-
-var lat=marker.getLatLng().lat;
-var lon=marker.getLatLng().lng;
-
-var cone=createCone(lat,lon,heading);
-
-if(headingCone==null){
-
-headingCone=L.polygon(cone,{
-color:"blue",
-fillOpacity:0.3
-}).addTo(map);
-
-}else{
-
-headingCone.setLatLngs(cone);
-
-}
-
-}
-
-});
 
 
 /* service worker */
