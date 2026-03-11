@@ -67,7 +67,7 @@ weight:4
 var firstFix=true;
 
 
-/* 扇形作成 */
+/* 扇形生成 */
 
 function createCone(lat,lon,heading){
 
@@ -104,7 +104,7 @@ var lon=pos.coords.longitude;
 
 path.push([lat,lon]);
 
-/* 現在地マーカー */
+/* 現在地 */
 
 if(marker==null){
 
@@ -141,22 +141,48 @@ firstFix=false;
 navigator.geolocation.watchPosition(
 updatePosition,
 function(err){alert(err.message);},
-{enableHighAccuracy:true}
+{
+enableHighAccuracy:true,
+maximumAge:0,
+timeout:10000
+}
 );
 
 
 /* 方位センサー */
 
-window.addEventListener("deviceorientationabsolute",function(e){
+window.addEventListener("deviceorientationabsolute", function(e){
 
-var heading=e.alpha;
+let heading = e.alpha;
 
-if(marker && heading!=null){
+if(heading==null || marker==null) return;
 
-var lat=marker.getLatLng().lat;
-var lon=marker.getLatLng().lng;
 
-var shape=createCone(lat,lon,heading);
+/* 画面回転補正 */
+
+let screenAngle = 0;
+
+if (screen.orientation && screen.orientation.angle !== undefined) {
+    screenAngle = screen.orientation.angle;
+}
+
+
+/* 補正 */
+
+heading = heading + screenAngle + 90;
+
+
+/* 0〜360正規化 */
+
+heading = (heading + 360) % 360;
+
+
+/* 扇形更新 */
+
+var lat = marker.getLatLng().lat;
+var lon = marker.getLatLng().lng;
+
+var shape = createCone(lat,lon,heading);
 
 if(cone==null){
 
@@ -172,12 +198,10 @@ cone.setLatLngs(shape);
 
 }
 
-}
-
 });
 
 
-/* service worker */
+/* Service Worker */
 
 if('serviceWorker' in navigator){
 navigator.serviceWorker.register('sw.js');
