@@ -65,7 +65,7 @@ weight:4
 var firstFix=true;
 
 
-/* 扇形生成 */
+/* 扇形 */
 
 function createCone(lat,lon,heading){
 
@@ -137,9 +137,7 @@ firstFix=false;
 navigator.geolocation.watchPosition(
 updatePosition,
 function(err){alert(err.message);},
-{
-enableHighAccuracy:true
-}
+{enableHighAccuracy:true}
 );
 
 
@@ -163,7 +161,7 @@ screenAngle = screen.orientation.angle;
 
 /* 補正 */
 
-heading = heading + screenAngle - 90;
+heading = heading + screenAngle - 90 + 180;
 
 heading = (heading + 360) % 360;
 
